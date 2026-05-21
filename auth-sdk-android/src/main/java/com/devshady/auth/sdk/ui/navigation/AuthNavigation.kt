@@ -55,15 +55,16 @@ fun AuthNavigation(
                             ServiceLocator.provideSmsRetrieverHelper(context)
                         )
                     }
+                    val onSuccess: () -> Unit = {
+                        backStack.add(AuthSuccessKey)
+                    }
                     androidx.compose.runtime.LaunchedEffect(Unit) {
-                        viewModel.startSmsRetriever()
+                        viewModel.startSmsRetriever(key.phoneNumber, onSuccess)
                     }
                     OtpVerificationScreen(
                         phoneNumber = key.phoneNumber,
                         viewModel = viewModel,
-                        onSuccess = {
-                            backStack.add(AuthSuccessKey)
-                        }
+                        onSuccess = onSuccess
                     )
                 }
                 is AuthSuccessKey -> NavEntry(key) {

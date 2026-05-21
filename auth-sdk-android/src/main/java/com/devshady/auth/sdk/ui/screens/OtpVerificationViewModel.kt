@@ -23,9 +23,12 @@ class OtpVerificationViewModel(
     private val _verificationState = MutableStateFlow<AuthResult<UserSession>?>(null)
     val verificationState: StateFlow<AuthResult<UserSession>?> = _verificationState.asStateFlow()
 
-    fun startSmsRetriever() {
+    fun startSmsRetriever(phoneNumber: String, onSuccess: () -> Unit) {
         smsRetrieverHelper.startListening { retrievedOtp ->
             _otp.value = retrievedOtp
+            if (retrievedOtp.length == 6) {
+                verifyOtp(phoneNumber, onSuccess)
+            }
         }
     }
 

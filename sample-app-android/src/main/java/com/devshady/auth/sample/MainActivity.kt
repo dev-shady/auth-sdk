@@ -1,6 +1,7 @@
 package com.devshady.auth.sample
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,9 +18,15 @@ import com.devshady.auth.sdk.ui.theme.AuthSdkTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+        val hashHelper = AppSignatureHelper(this)
+        Log.d("sms auto fill SDK_HASH_TEST", "Your Dynamic Debug Hash Code is: ${hashHelper.appSignatures.firstOrNull()}")
+
+
         // Initialize SDK
-        AuthSdk.initialize(AuthConfiguration(enableSmsRetriever = true))
+        AuthSdk.initialize(AuthConfiguration(
+            enableSmsRetriever = true,
+            useMockData = true
+            ))
         
         enableEdgeToEdge()
         setContent {
