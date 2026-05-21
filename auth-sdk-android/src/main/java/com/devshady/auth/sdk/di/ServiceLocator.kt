@@ -3,6 +3,9 @@ package com.devshady.auth.sdk.di
 import android.content.Context
 import com.devshady.auth.sdk.data.api.AuthApiService
 import com.devshady.auth.sdk.data.local.AuthLocalDataSource
+import com.devshady.auth.sdk.data.local.AuthLocalDataSourceImpl
+import com.devshady.auth.sdk.data.remote.AuthRemoteDataSource
+import com.devshady.auth.sdk.data.remote.AuthRemoteDataSourceImpl
 import com.devshady.auth.sdk.data.repository.AuthRepositoryImpl
 import com.devshady.auth.sdk.domain.repository.AuthRepository
 import com.devshady.auth.sdk.util.SmsRetrieverHelper
@@ -18,29 +21,40 @@ object ServiceLocator {
     private var authRepository: AuthRepository? = null
     private var authApiService: AuthApiService? = null
     private var authLocalDataSource: AuthLocalDataSource? = null
+    private var authRemoteDataSource: AuthRemoteDataSource? = null
     private var smsRetrieverHelper: SmsRetrieverHelper? = null
 
     private const val BASE_URL = "https://api.example.com/" // Placeholder
 
     fun provideAuthRepository(context: Context): AuthRepository {
-        return authRepository ?: createAuthRepository(context).also { authRepository = it }
+        return authRepository ?: synchronized(this) {
+            authRepository ?: createAuthRepository(context).also { authRepository = it }
+        }
     }
 
     fun provideSmsRetrieverHelper(context: Context): SmsRetrieverHelper {
-        return smsRetrieverHelper ?: SmsRetrieverHelper(context.applicationContext).also { smsRetrieverHelper = it }
+        return smsRetrieverHelper ?: synchronized(this) {
+            smsRetrieverHelper ?: SmsRetrieverHelper(context.applicationContext).also { smsRetrieverHelper = it }
+        }
     }
 
     private fun createAuthRepository(context: Context): AuthRepository {
-        //TODO synchronization
         return AuthRepositoryImpl(
-            provideAuthApiService(),
+            provideAuthRemoteDataSource(),
             provideAuthLocalDataSource(context)
         )
     }
 
+    private fun provideAuthRemoteDataSource(): AuthRemoteDataSource {
+        return authRemoteDataSource ?: synchronized(this) {
+            authRemoteDataSource ?: AuthRemoteDataSourceImpl(provideAuthApiService()).also { authRemoteDataSource = it }
+        }
+    }
+
     private fun provideAuthApiService(): AuthApiService {
-        //TODO synchronization
-        return authApiService ?: createAuthApiService().also { authApiService = it }
+        return authApiService ?: synchronized(this) {
+            authApiService ?: createAuthApiService().also { authApiService = it }
+        }
     }
 
     private fun createAuthApiService(): AuthApiService {
@@ -64,7 +78,8 @@ object ServiceLocator {
     }
 
     private fun provideAuthLocalDataSource(context: Context): AuthLocalDataSource {
-        //TODO synchronization
-        return authLocalDataSource ?: AuthLocalDataSource(context.applicationContext).also { authLocalDataSource = it }
+        return authLocalDataSource ?: synchronized(this) {
+            authLocalDataSource ?: AuthLocalDataSourceImpl(context.applicationContext).also { authLocalDataSource = it }
+        }
     }
 }
