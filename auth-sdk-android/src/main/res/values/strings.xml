@@ -1,0 +1,16 @@
+<resources>
+    <string name="auth_sdk_name">Authentication Module</string>
+    <string name="auth_sdk_phone_entry_title">Enter your phone number</string>
+    <string name="auth_sdk_phone_entry_description">We will send you a verification code to this number.</string>
+    <string name="auth_sdk_phone_number_label">Phone Number</string>
+    <string name="auth_sdk_next_button">Next</string>
+    <string name="auth_sdk_otp_verification_title">Verify your number</string>
+    <string name="auth_sdk_otp_verification_description">Enter the 6-digit code sent to %1$s</string>
+    <string name="auth_sdk_otp_label">Verification Code</string>
+    <string name="auth_sdk_verify_button">Verify</string>
+    <string name="auth_sdk_loading">Loading...</string>
+    <string name="auth_sdk_error_generic">Something went wrong. Please try again.</string>
+    <string name="auth_sdk_success_title">Authentication Successful</string>
+    <string name="auth_sdk_success_description">You have been successfully authenticated.</string>
+    <string name="auth_sdk_continue_button">Continue</string>
+</resources>
