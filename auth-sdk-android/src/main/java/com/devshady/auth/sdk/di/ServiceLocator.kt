@@ -1,11 +1,13 @@
 package com.devshady.auth.sdk.di
 
 import android.content.Context
+import com.devshady.auth.sdk.AuthSdk
 import com.devshady.auth.sdk.data.api.AuthApiService
 import com.devshady.auth.sdk.data.local.AuthLocalDataSource
 import com.devshady.auth.sdk.data.local.AuthLocalDataSourceImpl
 import com.devshady.auth.sdk.data.remote.AuthRemoteDataSource
 import com.devshady.auth.sdk.data.remote.AuthRemoteDataSourceImpl
+import com.devshady.auth.sdk.data.remote.FakeAuthRemoteDataSource
 import com.devshady.auth.sdk.data.repository.AuthRepositoryImpl
 import com.devshady.auth.sdk.domain.repository.AuthRepository
 import com.devshady.auth.sdk.util.SmsRetrieverHelper
@@ -46,8 +48,16 @@ object ServiceLocator {
     }
 
     private fun provideAuthRemoteDataSource(): AuthRemoteDataSource {
+        val useMock = AuthSdk.configuration?.useMockData ?: false
         return authRemoteDataSource ?: synchronized(this) {
-            authRemoteDataSource ?: AuthRemoteDataSourceImpl(provideAuthApiService()).also { authRemoteDataSource = it }
+            authRemoteDataSource ?: run {
+                val dataSource = if (useMock) {
+                    FakeAuthRemoteDataSource()
+                } else {
+                    AuthRemoteDataSourceImpl(provideAuthApiService())
+                }
+                dataSource.also { authRemoteDataSource = it }
+            }
         }
     }
 

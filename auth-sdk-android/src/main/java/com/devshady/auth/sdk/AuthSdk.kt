@@ -9,7 +9,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 
 object AuthSdk {
 
-    private var configuration: AuthConfiguration? = null
+    internal var configuration: AuthConfiguration? = null
+        private set
     private val _authResult = MutableSharedFlow<UserSession>(extraBufferCapacity = 1)
     val authResult: SharedFlow<UserSession> = _authResult.asSharedFlow()
 
