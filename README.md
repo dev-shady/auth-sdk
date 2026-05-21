@@ -96,6 +96,23 @@ The `AuthConfiguration` class allows you to customize the SDK behavior:
 | `baseUrl` | `String?` | The base URL for your authentication API. |
 | `appHash` | `String?` | Your app's hash string for the SMS Retriever API. |
 | `enableSmsRetriever` | `Boolean` | Whether to enable automatic OTP filling via SMS. |
+| `useMockData` | `Boolean` | Whether to use hardcoded mock data for development without a backend. |
+
+## 🛠 Mock Data & Local Development
+
+For testing the UI flow without a real backend, you can enable the mock data source. This is useful for rapid prototyping or automated UI testing.
+
+```kotlin
+AuthSdk.initialize(
+    AuthConfiguration(
+        useMockData = true
+    )
+)
+```
+
+**Mock Behavior:**
+- **Phone Entry:** Any phone number with 10 or more digits will succeed.
+- **OTP Verification:** Use the magic code `123456` to successfully verify. Any other code will return an error.
 
 ## 🧪 Testing
 
