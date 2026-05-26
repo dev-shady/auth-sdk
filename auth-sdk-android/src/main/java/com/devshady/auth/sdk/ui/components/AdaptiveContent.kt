@@ -13,8 +13,17 @@ fun AdaptiveContent(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    // 1. Grab the window width sizing class from the official M3 Adaptive API
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val widthClass = adaptiveInfo.windowSizeClass.windowWidthSizeClass
+
+    // 2. Google Way: Scale up progressively. Content NEVER shrinks as screens grow.
+    val maxWidth = when (widthClass) {
+        WindowWidthSizeClass.COMPACT -> 440.dp    // Small phones: standard content width limits
+        WindowWidthSizeClass.MEDIUM -> 600.dp     // Foldables/Small tablets: expands out naturally
+        WindowWidthSizeClass.EXPANDED -> 840.dp   // Desktops/Large Tablets: gives full canvas room
+        else -> 840.dp
+    }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -22,12 +31,15 @@ fun AdaptiveContent(
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = if (widthClass == WindowWidthSizeClass.COMPACT) 600.dp else 450.dp)
+                // Fluid up to the calculated max breakpoint safely
+                .widthIn(max = maxWidth)
                 .fillMaxWidth()
-                .padding(16.dp),
+                // Google Layout Grid recommends 16dp on mobile, 24dp+ on larger display views
+                .padding(if (widthClass == WindowWidthSizeClass.COMPACT) 16.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             content = content
         )
     }
 }
+
