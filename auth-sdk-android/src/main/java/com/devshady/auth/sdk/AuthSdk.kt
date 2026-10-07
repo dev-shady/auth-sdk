@@ -7,10 +7,9 @@ import com.devshady.auth.sdk.domain.model.UserSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -22,12 +21,11 @@ object AuthSdk {
 
     private val sdkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val _authResult = MutableSharedFlow<UserSession>(
-        extraBufferCapacity = 1,
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    val authResult: SharedFlow<UserSession> = _authResult.asSharedFlow()
+    private val _authResult = MutableStateFlow(UserSession())
+    val authResult: StateFlow<UserSession> = _authResult.asStateFlow()
+
+    val currentSession: UserSession
+        get() = authResult.value
 
     fun initialize(context: Context, config: AuthConfiguration = AuthConfiguration()) {
         this.configuration = config
@@ -36,10 +34,10 @@ object AuthSdk {
         // Reset cached network/repo singletons so any new AuthConfiguration settings (e.g. baseUrl, useMockData) take effect
         ServiceLocator.resetCachedDependencies()
 
-        // Bind DataStore reactive flow directly to AuthSdk.authResult on Dispatchers.IO
+        // Bind DataStore reactive flow directly to AuthSdk.authResult StateFlow on Dispatchers.IO
         sdkScope.launch {
             ServiceLocator.provideAuthRepository(context).getUserSession().collect { session ->
-                _authResult.emit(session)
+                _authResult.value = session
             }
         }
     }
@@ -67,7 +65,7 @@ object AuthSdk {
 
     internal fun notifyAuthSuccess(session: UserSession? = null) {
         session?.let {
-            _authResult.tryEmit(it)
+            _authResult.value = it
         }
     }
 }
