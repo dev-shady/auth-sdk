@@ -1,30 +1,35 @@
 package com.devshady.auth.sdk.data.local
 
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import com.devshady.auth.sdk.domain.model.UserSession
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class AuthLocalDataSourceImplTest {
 
     private lateinit var dataSource: AuthLocalDataSource
     private lateinit var context: Context
-    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        dataSource = AuthLocalDataSourceImpl(context)
+        val testFile = File(context.filesDir, "datastore/test_${System.nanoTime()}.preferences_pb")
+        val testDataStore = PreferenceDataStoreFactory.create(
+            produceFile = { testFile }
+        )
+        dataSource = AuthLocalDataSourceImpl(context, testDataStore)
     }
 
     @After
@@ -36,7 +41,7 @@ class AuthLocalDataSourceImplTest {
     }
 
     @Test
-    fun `verify datastore emits empty session when uninitialized`() = runTest(testDispatcher) {
+    fun `verify datastore emits empty session when uninitialized`() = runTest {
         dataSource.userSession.test {
             val userData = awaitItem()
             assertThat(userData.authToken).isNull()
@@ -46,7 +51,7 @@ class AuthLocalDataSourceImplTest {
     }
 
     @Test
-    fun `saveSession updates userSession flow with correct data`() = runTest(testDispatcher) {
+    fun `saveSession updates userSession flow with correct data`() = runTest {
         val authToken = "test_token"
         val phoneNumber = "+1234567890"
 
@@ -65,20 +70,35 @@ class AuthLocalDataSourceImplTest {
     }
 
     @Test
-    fun `clearSession wipes out all items and resets state back to default values`() = runTest(testDispatcher) {
+    fun `expired session returns unauthenticated user session`() = runTest {
+        val pastTimestamp = System.currentTimeMillis() - 10_000L
+
+        dataSource.saveSession(UserSession(
+            authToken = "token",
+            phoneNumber = "+1234567890",
+            isAuthenticated = true,
+            expiresAt = pastTimestamp
+        ))
+
+        dataSource.userSession.test {
+            val userData = awaitItem()
+            assertThat(userData.isAuthenticated).isFalse()
+        }
+    }
+
+    @Test
+    fun `clearSession wipes out all items and resets state back to default values`() = runTest {
         val testSession = UserSession(
             phoneNumber = "+12345",
             authToken = "token",
             isAuthenticated = true
         )
 
-        dataSource.userSession.test {
-            // Skip initial state
-            awaitItem()
+        dataSource.saveSession(testSession)
 
-            // Save session data
-            dataSource.saveSession(testSession)
-            assertThat(awaitItem().isAuthenticated).isTrue()
+        dataSource.userSession.test {
+            val savedItem = awaitItem()
+            assertThat(savedItem.isAuthenticated).isTrue()
 
             // When
             dataSource.clearSession()

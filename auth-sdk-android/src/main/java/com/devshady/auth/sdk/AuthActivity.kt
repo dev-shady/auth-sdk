@@ -23,18 +23,15 @@ class AuthActivity : ComponentActivity() {
             AuthSdkTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     val backStack = rememberNavBackStack(PhoneEntryKey)
                     @Suppress("UNCHECKED_CAST")
                     AuthNavigation(
                         backStack = backStack as NavBackStack<AuthNavKey>,
-                        onFinish = {
-                            // Notify SDK of success and finish
-                            AuthSdk.notifyAuthSuccess()
-                            finish()
-                        }
-                    )
+                    ) {
+                        finish()
+                    }
                 }
             }
         }

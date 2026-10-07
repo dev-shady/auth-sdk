@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.devshady.auth.sdk.AuthSdk
 import com.devshady.auth.sdk.AuthConfiguration
 import com.devshady.auth.sdk.ui.theme.AuthSdkTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,17 +22,20 @@ class MainActivity : ComponentActivity() {
         val hashHelper = AppSignatureHelper(this)
         Log.d("sms auto fill SDK_HASH_TEST", "Your Dynamic Debug Hash Code is: ${hashHelper.appSignatures.firstOrNull()}")
 
-
-        // Initialize SDK
-        AuthSdk.initialize(AuthConfiguration(
-            enableSmsRetriever = true,
-            useMockData = true
-            ))
+        // Initialize SDK with Application Context
+        AuthSdk.initialize(
+            context = this,
+            config = AuthConfiguration(
+                enableSmsRetriever = true,
+                useMockData = true
+            )
+        )
         
         enableEdgeToEdge()
         setContent {
             AuthSdkTheme {
                 val authResult by AuthSdk.authResult.collectAsState(initial = null)
+                val coroutineScope = rememberCoroutineScope()
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
@@ -47,7 +51,11 @@ class MainActivity : ComponentActivity() {
                                 style = MaterialTheme.typography.headlineSmall
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = { /* Handle logout */ }) {
+                            Button(onClick = {
+                                coroutineScope.launch {
+                                    AuthSdk.logout(this@MainActivity)
+                                }
+                            }) {
                                 Text("Logout")
                             }
                         } else {

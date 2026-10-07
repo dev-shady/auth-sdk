@@ -5,15 +5,18 @@ import com.devshady.auth.sdk.data.remote.AuthRemoteDataSource
 import com.devshady.auth.sdk.domain.model.AuthResult
 import com.devshady.auth.sdk.domain.model.UserSession
 import com.devshady.auth.sdk.domain.repository.AuthRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 
 class AuthRepositoryImpl(
     private val remoteDataSource: AuthRemoteDataSource,
     private val localDataSource: AuthLocalDataSource
 ) : AuthRepository {
 
-    override suspend fun requestOtp(phoneNumber: String): AuthResult<String> {
-        return try {
+    override suspend fun requestOtp(phoneNumber: String): AuthResult<String> = withContext(Dispatchers.IO) {
+        try {
             val response = remoteDataSource.requestOtp(phoneNumber)
             if (response.isSuccessful && response.body()?.success == true) {
                 AuthResult.Success(response.body()?.message ?: "OTP sent successfully")
@@ -25,8 +28,8 @@ class AuthRepositoryImpl(
         }
     }
 
-    override suspend fun verifyOtp(phoneNumber: String, otp: String): AuthResult<UserSession> {
-        return try {
+    override suspend fun verifyOtp(phoneNumber: String, otp: String): AuthResult<UserSession> = withContext(Dispatchers.IO) {
+        try {
             val response = remoteDataSource.verifyOtp(phoneNumber, otp)
             val body = response.body()
             if (response.isSuccessful && body?.success == true && body.authToken != null) {
@@ -45,9 +48,9 @@ class AuthRepositoryImpl(
         }
     }
 
-    override fun getUserSession(): Flow<UserSession> = localDataSource.userSession
+    override fun getUserSession(): Flow<UserSession> = localDataSource.userSession.flowOn(Dispatchers.IO)
 
-    override suspend fun clearSession() {
+    override suspend fun clearSession() = withContext(Dispatchers.IO) {
         localDataSource.clearSession()
     }
 }

@@ -1,7 +1,6 @@
 package com.devshady.auth.sdk.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -19,11 +18,16 @@ import com.devshady.auth.sdk.ui.screens.SuccessScreen
 @Composable
 fun AuthNavigation(
     backStack: NavBackStack<AuthNavKey>,
+    phoneEntryViewModelProvider: @Composable () -> PhoneEntryViewModel = {
+        val context = LocalContext.current
+        viewModel { ServiceLocator.providePhoneEntryViewModel(context) }
+    },
+    otpVerificationViewModelProvider: @Composable (String) -> OtpVerificationViewModel = { _ ->
+        val context = LocalContext.current
+        viewModel { ServiceLocator.provideOtpVerificationViewModel(context) }
+    },
     onFinish: () -> Unit
 ) {
-    val context = LocalContext.current
-    val repository = remember { ServiceLocator.provideAuthRepository(context) }
-
     NavDisplay(
         backStack = backStack,
         onBack = {
@@ -38,9 +42,7 @@ fun AuthNavigation(
         entryProvider = { key ->
             when (key) {
                 is PhoneEntryKey -> NavEntry(key) {
-                    val viewModel: PhoneEntryViewModel = viewModel {
-                        PhoneEntryViewModel(repository)
-                    }
+                    val viewModel = phoneEntryViewModelProvider()
                     PhoneEntryScreen(
                         viewModel = viewModel,
                         onNext = { phoneNumber ->
@@ -49,12 +51,7 @@ fun AuthNavigation(
                     )
                 }
                 is OtpVerificationKey -> NavEntry(key) {
-                    val viewModel: OtpVerificationViewModel = viewModel {
-                        OtpVerificationViewModel(
-                            repository,
-                            ServiceLocator.provideSmsRetrieverHelper(context)
-                        )
-                    }
+                    val viewModel = otpVerificationViewModelProvider(key.phoneNumber)
                     val onSuccess: () -> Unit = {
                         backStack.add(AuthSuccessKey)
                     }

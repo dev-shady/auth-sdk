@@ -71,6 +71,8 @@ class SmsRetrieverHelper(private val context: Context) {
             context.unregisterReceiver(smsReceiver)
         } catch (e: Exception) {
             // Already unregistered
+        } finally {
+            onOtpReceived = null
         }
     }
 

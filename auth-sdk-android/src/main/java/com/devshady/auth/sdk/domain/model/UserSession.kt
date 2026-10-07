@@ -4,7 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserSession(
-    val phoneNumber: String,
+    val phoneNumber: String = "",
     val authToken: String? = null,
-    val isAuthenticated: Boolean = false
+    val isAuthenticated: Boolean = false,
+    val expiresAt: Long? = null
 )
